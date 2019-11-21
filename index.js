@@ -1,6 +1,6 @@
 const jsdocx = require('jsdoc-x');
 
-async function openapiJsonrpcJsdoc({ files, packageUrl, servers, api = '/' }) {
+async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, servers, api = '/' }) {
   const [package_, ...documents] = await jsdocx.parse({
     files,
     package: packageUrl,
@@ -27,12 +27,7 @@ async function openapiJsonrpcJsdoc({ files, packageUrl, servers, api = '/' }) {
     'servers': servers,
     'paths': {},
     'components': {
-      securitySchemes: {
-        BasicAuth: {
-          type: 'http',
-          scheme: 'digest',
-        },
-      },
+      securitySchemes,
     },
     'security': [
       {
@@ -46,7 +41,7 @@ async function openapiJsonrpcJsdoc({ files, packageUrl, servers, api = '/' }) {
     const schema = {
       post: {
         operationId: `${module.meta.filename}`,
-        deprecated: false,
+        deprecated: module.deprecated || false,
         summary: `/${apiName}`,
         description: module.description,
         tags: ['JSONRPC'],

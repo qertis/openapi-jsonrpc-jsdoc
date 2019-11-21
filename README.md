@@ -24,7 +24,7 @@ module.exports = (parameters) => {
 // index.js
 const fs = require('fs');
 const openapiJSONRpcJSDoc = require('openapi-jsonrpc-jsdoc');
-const data = await openapiJSONRpcJSDoc({
+openapiJSONRpcJSDoc({
     api: '/',
     servers: [
         {
@@ -33,13 +33,14 @@ const data = await openapiJSONRpcJSDoc({
     ],
     packageUrl: './package.json',
     files: './api/*.js',
+}).then(data => {
+  fs.writeFileSync('openapi.json', JSON.stringify(data, null, 2));  
 });
-fs.writeFileSync('openapi.json', JSON.stringify(data, null, 2));
 ```
 
-### Result
+<details>
+<summary>Result</summary>
 ```json
-// openapi.json
 {
   "x-send-defaults": true,
   "openapi": "3.0.0",
@@ -144,3 +145,4 @@ fs.writeFileSync('openapi.json', JSON.stringify(data, null, 2));
   "tags": []
 }
 ```
+</details>
