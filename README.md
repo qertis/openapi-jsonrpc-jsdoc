@@ -40,6 +40,7 @@ openapiJSONRpcJSDoc({
 
 <details>
 <summary>Result</summary>
+
 ```json
 {
   "x-send-defaults": true,
@@ -145,4 +146,5 @@ openapiJSONRpcJSDoc({
   "tags": []
 }
 ```
+
 </details>
