@@ -28,6 +28,27 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
     'paths': {},
     'components': {
       securitySchemes,
+      schemas: {
+        Error: {
+          required: [
+            "error",
+            "id",
+            "jsonrpc"
+          ],
+          properties: {
+            "id": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "error": {
+              "type": "object"
+            },
+            "jsonrpc": {
+              "type": "string"
+            }
+          }
+        },
+      }
     },
     'security': [
       {
@@ -49,7 +70,24 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
         responses: {
           '200': {
             description: 'OK',
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           },
+          default: {
+            description: 'unexpected error',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/Error'
+                }
+              }
+            }
+          }
         },
         requestBody: {
           content: {
