@@ -1,6 +1,6 @@
 {
   "name": "openapi-jsonrpc-jsdoc",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "OpenAPI generator",
   "main": "index.js",
   "scripts": {
