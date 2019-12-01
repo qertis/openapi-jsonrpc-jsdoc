@@ -1,8 +1,8 @@
 const test = require('ava');
 const openapiJSONRpcJSDoc = require('../index');
 
-test('t1', async (t) => {
-  const data = await openapiJSONRpcJSDoc({
+test.before(async t => {
+  t.context.data = await openapiJSONRpcJSDoc({
     api: '/api/',
     securitySchemes: {
       BasicAuth: {
@@ -18,7 +18,22 @@ test('t1', async (t) => {
     packageUrl: './package.json',
     files: './test/api/*.js',
   });
-  t.false(data.paths['/api/v1'].post.deprecated);
-  t.true(data.paths['/api/v2'].post.deprecated);
 });
 
+test('t1', t => {
+  const data = t.context.data;
+  const v1Test = data.paths['/api/v1'];
+  t.false(v1Test.post.deprecated);
+  t.is(typeof v1Test.post.description, 'string');
+  t.true(Array.isArray(v1Test.post.tags));
+  t.true(Array.isArray(v1Test.post.parameters));
+  const v1RequestBodySchema = v1Test.post.requestBody.content['application/json'].schema;
+  t.is(v1RequestBodySchema.type, 'object');
+  t.true(v1RequestBodySchema.required.includes('id'));
+});
+
+test('t2', t => {
+  const data = t.context.data;
+  const v2Test = data.paths['/api/v2'];
+  t.true(v2Test.post.deprecated);
+});

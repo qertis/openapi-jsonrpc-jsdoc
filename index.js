@@ -152,7 +152,7 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
         {
           title: 'Parameters',
           type: 'object',
-          required: [],
+          required: ['method', 'id', 'jsonrpc'],
           properties: {},
         },
       );
