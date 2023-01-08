@@ -5,7 +5,7 @@ const path = require('path');
 const OpenApiValidator = require('express-openapi-validator');
 const openapiJSONRpcJSDoc = require('../index');
 
-const port = 80;
+const port = 9000;
 const app = express();
 const apiSpec = path.join(__dirname, './fixture/api.json');
 
@@ -34,7 +34,7 @@ test.before(async t => {
     });
   });
 
-  http.createServer(app).listen(port);
+  app.listen(port);
 
   t.context.data = await openapiJSONRpcJSDoc({
     api: '/api/',
@@ -78,6 +78,7 @@ test.cb('openapi validator', (t) => {
 
   const options = {
     hostname: '127.0.0.1',
+    port: port,
     path: '/api/api-v1',
     method: 'POST',
     headers: {
