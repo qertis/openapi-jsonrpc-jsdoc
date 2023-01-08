@@ -1,7 +1,41 @@
 const test = require('ava');
+const express = require('express');
+const http = require('http');
+const path = require('path');
+const OpenApiValidator = require('express-openapi-validator');
 const openapiJSONRpcJSDoc = require('../index');
 
+const port = 80;
+const app = express();
+const apiSpec = path.join(__dirname, './fixture/api.json');
+
 test.before(async t => {
+  app.use(express.urlencoded({ extended: false }));
+  app.use(express.text());
+  app.use(express.json());
+  app.use('/spec', express.static(apiSpec));
+
+  app.use(
+    OpenApiValidator.middleware({
+      apiSpec,
+      validateRequests: true,
+      validateResponses: true,
+    }),
+  );
+
+  app.post('/api/api-v1', (req, res) => {
+    res.send('pong');
+  })
+
+  app.use((err, req, res, next) => {
+    res.status(err.status || 500).json({
+      message: err.message,
+      errors: err.errors,
+    });
+  });
+
+  http.createServer(app).listen(port);
+
   t.context.data = await openapiJSONRpcJSDoc({
     api: '/api/',
     securitySchemes: {
@@ -12,7 +46,7 @@ test.before(async t => {
     },
     servers: [
       {
-        url: '0.0.0.0:8080',
+        url: '0.0.0.0:' + port,
       },
     ],
     packageUrl: './package.json',
@@ -36,4 +70,38 @@ test('t2', t => {
   const data = t.context.data;
   const v2Test = data.paths['/api/v2'];
   t.true(v2Test.post.deprecated);
+});
+
+test.cb('openapi validator', (t) => {
+  t.timeout(10000);
+  const data = '{"jsonrpc":"2.0","method":"ping","id":1}';
+
+  const options = {
+    hostname: '127.0.0.1',
+    path: '/api/api-v1',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Content-Length': data.length,
+    }
+  }
+  const req = http.request(options, res => {
+    let data = '';
+    if (res.statusCode >= 400) {
+      t.fail('Status Code:' + res.statusCode);
+      return;
+    }
+    res.on('data', chunk => {
+      data += chunk;
+    });
+    res.on('end', () => {
+      t.is('pong', data);
+      t.pass();
+    })
+  })
+  .on('error', err => {
+    t.fail(err.message);
+  });
+  req.write(data);
+  req.end();
 });
