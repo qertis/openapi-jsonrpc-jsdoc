@@ -1,13 +1,13 @@
 # openapi-jsonrpc-jsdoc
 
-Install
+## Install
 ```fish
 npm i openapi-jsonrpc-jsdoc --save-dev
 ```
 
 ## Example
 
-### Create JSON-RPC Methoc
+### Create JSON-RPC Method
 ```js
 // api/api-v1.js
 /**
@@ -40,7 +40,7 @@ openapiJSONRpcJSDoc({
 ```
 
 <details>
-<summary>Result</summary>
+<summary>See result</summary>
 
 ```json
 {

@@ -1,6 +1,6 @@
 {
   "name": "openapi-jsonrpc-jsdoc",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "OpenAPI generator",
   "main": "index.js",
   "scripts": {
@@ -14,13 +14,14 @@
     "openapi jsdoc",
     "open api js doc",
     "postman jsdoc",
-    "swagger openapi jsondoc",
-    "jsdoc openapi",
+    "swagger jsondoc",
+    "openapi jsondoc",
     "json-rpc openapi",
+    "json-rpc swagger",
     "jsonrpc openapi",
     "generator documentation openapi jsonrpc 2.0"
   ],
-  "author": "qertis",
+  "author": "Denis Baskovsky <baskovsky@yandex.ru> (https://baskovsky.ru/)",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/qertis/openapi-jsonrpc-jsdoc/issues"
@@ -32,6 +33,9 @@
   "devDependencies": {
     "ava": "~3.15.0",
     "express": "~4.18.2",
-    "express-openapi-validator": "~5.0.0"
+    "express-openapi-validator": "~5.0.4"
+  },
+  "engines": {
+    "node": ">= 14"
   }
 }
