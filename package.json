@@ -1,6 +1,6 @@
 {
   "name": "openapi-jsonrpc-jsdoc",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "OpenAPI generator",
   "main": "index.js",
   "scripts": {
@@ -36,6 +36,6 @@
     "express-openapi-validator": "~5.5.3"
   },
   "engines": {
-    "node": ">= 14"
+    "node": ">= 16"
   }
 }
