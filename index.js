@@ -154,7 +154,7 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
         {
           title: 'Parameters',
           type: 'object',
-          'default': module.examples.length ? JSON.parse(module.examples[0]) : null,
+          'default': module.examples?.length ? JSON.parse(module.examples[0]) : null,
           required: ['method', 'id', 'jsonrpc'],
           properties: {},
         },
