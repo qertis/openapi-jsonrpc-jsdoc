@@ -46,10 +46,10 @@ test.before(async t => {
     },
     servers: [
       {
-        url: '0.0.0.0:' + port,
+        url: 'http://0.0.0.0:' + port,
       },
     ],
-    packageUrl: './package.json',
+    packageUrl: path.resolve('./package.json'),
     files: './test/api/*.js',
   });
 });

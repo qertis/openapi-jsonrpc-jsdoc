@@ -4,7 +4,7 @@
   "description": "OpenAPI generator",
   "main": "index.js",
   "scripts": {
-    "test": "ava test/*.test.js"
+    "test": "NODE_NO_WARNINGS=1 ava test/*.test.js"
   },
   "repository": {
     "type": "git",

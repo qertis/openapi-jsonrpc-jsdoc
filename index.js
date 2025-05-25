@@ -5,9 +5,12 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
     files,
     package: packageUrl,
     access: 'public',
+    encoding: 'utf8',
     module: true,
     undocumented: false,
     sort: 'scope',
+    allowUnknownTags: true,
+    dictionaries: ['jsdoc'],
     hierarchy: true,
   });
   const temporaryDocument = {
@@ -143,7 +146,6 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
             ...accumulator.properties,
             [name]: {
               type,
-              // default: ...,// fixme: настроить выдачу default значения по JSON-DOC
               description,
             },
           };
@@ -152,6 +154,7 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
         {
           title: 'Parameters',
           type: 'object',
+          'default': module.examples.length ? JSON.parse(module.examples[0]) : null,
           required: ['method', 'id', 'jsonrpc'],
           properties: {},
         },
