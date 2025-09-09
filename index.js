@@ -141,7 +141,9 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
           } catch {
             name = parameter.name;
           }
-          accumulator.required.push(name);
+          if (!parameter.optional) {
+            accumulator.required.push(name);
+          }
           accumulator.properties = {
             ...accumulator.properties,
             [name]: {

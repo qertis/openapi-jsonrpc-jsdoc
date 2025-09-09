@@ -72,6 +72,31 @@ test('t2', t => {
   t.true(v2Test.post.deprecated);
 });
 
+test('optional parameters support', t => {
+  const data = t.context.data;
+  const testOptionalApi = data.paths['/api/test-optional'];
+  t.false(testOptionalApi.post.deprecated);
+  
+  const paramsSchema = testOptionalApi.post.requestBody.content['application/json'].schema.properties.params;
+  
+  // Check that required parameter is in required array
+  t.true(paramsSchema.required.includes('required_param'), 'required_param should be in required array');
+  
+  // Check that optional parameters are NOT in required array
+  t.false(paramsSchema.required.includes('optional_param'), 'optional_param should NOT be in required array');
+  t.false(paramsSchema.required.includes('another_optional'), 'another_optional should NOT be in required array');
+  
+  // Check that all parameters are present in properties
+  t.true('required_param' in paramsSchema.properties, 'required_param should be in properties');
+  t.true('optional_param' in paramsSchema.properties, 'optional_param should be in properties');
+  t.true('another_optional' in paramsSchema.properties, 'another_optional should be in properties');
+  
+  // Verify the types are correct
+  t.is(paramsSchema.properties.required_param.type, 'string');
+  t.is(paramsSchema.properties.optional_param.type, 'number');
+  t.is(paramsSchema.properties.another_optional.type, 'boolean');
+});
+
 test.cb('openapi validator', (t) => {
   t.timeout(10000);
   const data = '{"jsonrpc":"2.0","method":"ping","id":1}';
