@@ -2,6 +2,8 @@
  * @description Название API
  * @param {object} parameters - params
  * @param {string} parameters.id - id
+ * @param {string} [parameters.test] - test
+ * @tags api, api-v1, api
  * @example
  * {
  *    "@context": "https://www.w3.org/ns/activitystreams",

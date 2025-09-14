@@ -1,7 +1,7 @@
 {
   "name": "openapi-jsonrpc-jsdoc",
-  "version": "1.1.2",
-  "description": "OpenAPI generator",
+  "version": "1.2.0",
+  "description": "Transform JSDoc-annotated JSON-RPC 2.0 methods into OpenAPI 3.0 specifications. Auto-generates REST API documentation with complete schemas, parameters, and endpoint definitions.",
   "main": "index.js",
   "scripts": {
     "test": "NODE_NO_WARNINGS=1 ava test/*.test.js"
@@ -33,9 +33,9 @@
   "devDependencies": {
     "ava": "~3.15.0",
     "express": "~5.1.0",
-    "express-openapi-validator": "~5.5.3"
+    "express-openapi-validator": "~5.6.0"
   },
   "engines": {
-    "node": ">= 16"
+    "node": ">= 18"
   }
 }

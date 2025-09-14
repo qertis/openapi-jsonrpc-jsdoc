@@ -13,6 +13,7 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
     dictionaries: ['jsdoc'],
     hierarchy: true,
   });
+  const tags = [];
   const temporaryDocument = {
     'x-send-defaults': true,
     'openapi': '3.0.0',
@@ -21,7 +22,7 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
     'x-explorer-enabled': true,
     'x-proxy-enabled': true,
     'x-samples-enabled': true,
-    'x-samples-languages': ['curl', 'node', 'javascript'],
+    'x-samples-languages': ['node', 'javascript'],
     'info': {
       version: package_.version,
       title: package_.name,
@@ -58,17 +59,25 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
         BasicAuth: [],
       },
     ],
-    'tags': [],
+    'tags': tags,
   };
+  const requiredSchema = ['method', 'id', 'jsonrpc'];
   for (const module of documents) {
     const apiName = module.meta.filename.replace(/.js$/, '');
+
+    if (module.tags && Array.isArray(module.tags)) {
+      for (const tag of module.tags) {
+        tags.push(...new Set(tag.value.split(',').map(t => t.trim())));
+      }
+    }
+
     const schema = {
       post: {
         operationId: `${module.meta.filename}`,
         deprecated: module.deprecated || false,
         summary: `/${apiName}`,
         description: module.description,
-        tags: ['JSONRPC'],
+        tags: tags,
         parameters: [],
         responses: {
           '200': {
@@ -97,7 +106,7 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
             'application/json': {
               schema: {
                 type: 'object',
-                required: ['method', 'id', 'jsonrpc'],
+                required: requiredSchema,
                 properties: {
                   method: {
                     type: 'string',
@@ -114,7 +123,7 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
                   jsonrpc: {
                     type: 'string',
                     default: '2.0',
-                    description: 'JSON-RPC Version (2.0)',
+                    description: 'JSON-RPC 2.0 protocol',
                   },
                 },
               },
@@ -124,10 +133,15 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
       },
     };
     if (module.params) {
+      let exampleJSON = null;
+      if (module.examples?.length) {
+        exampleJSON = JSON.parse(module.examples[0]);
+      }
+
       const propertiesParameters = module.params.reduce(
         (accumulator, parameter) => {
           if (!parameter.type) {
-            throw new Error('JSDOC parameter error: ' + apiName);
+            throw new Error('JSDoc parameter error: ' + apiName);
           }
           // todo поддержать не только object поле в аргументе функции
           if (parameter.type.names[0] === 'object') {
@@ -141,7 +155,9 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
           } catch {
             name = parameter.name;
           }
-          accumulator.required.push(name);
+          if (!parameter.optional) {
+            accumulator.required.push(name);
+          }
           accumulator.properties = {
             ...accumulator.properties,
             [name]: {
@@ -154,17 +170,14 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
         {
           title: 'Parameters',
           type: 'object',
-          'default': module.examples?.length ? JSON.parse(module.examples[0]) : null,
-          required: ['method', 'id', 'jsonrpc'],
+          'default': exampleJSON,
+          required: requiredSchema,
           properties: {},
         },
       );
-      schema.post.requestBody.content['application/json'].schema.required.push(
-        'params',
-      );
-      schema.post.requestBody.content[
-        'application/json'
-        ].schema.properties.params = propertiesParameters;
+      const schemaPostJsdoc = schema.post.requestBody.content['application/json'].schema;
+      schemaPostJsdoc.required.push('params');
+      schemaPostJsdoc.properties.params = propertiesParameters;
     }
     temporaryDocument.paths[`${api}${apiName}`] = schema;
   }
