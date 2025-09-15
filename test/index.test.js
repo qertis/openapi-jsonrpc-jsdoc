@@ -64,7 +64,7 @@ test('t1', t => {
   t.true(Array.isArray(v1Test.post.parameters));
   const v1RequestBodySchema = v1Test.post.requestBody.content['application/json'].schema;
   t.is(v1RequestBodySchema.type, 'object');
-  t.true(v1RequestBodySchema.required.includes('id'));
+  t.true(v1RequestBodySchema.required.includes('method'));
 });
 
 test('t2', t => {

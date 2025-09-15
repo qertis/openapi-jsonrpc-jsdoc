@@ -1,6 +1,6 @@
 {
   "name": "openapi-jsonrpc-jsdoc",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Transform JSDoc-annotated JSON-RPC 2.0 methods into OpenAPI 3.0 specifications. Auto-generates REST API documentation with complete schemas, parameters, and endpoint definitions.",
   "main": "index.js",
   "scripts": {

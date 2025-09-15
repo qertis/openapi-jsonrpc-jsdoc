@@ -61,7 +61,7 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
     ],
     'tags': [],
   };
-  const requiredSchema = ['method', 'id', 'jsonrpc'];
+  const requiredSchema = ['method', 'jsonrpc'];
   prepare: for (const module of documents) {
     let isJsonRpc = false;
 
@@ -121,7 +121,6 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
                     default: apiName,
                     description: `API method ${apiName}`,
                   },
-                  // todo делать разграничение для notification request (без id)
                   id: {
                     type: 'integer',
                     default: 1,
@@ -155,7 +154,23 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
           if (parameter.type.names[0] === 'object') {
             return accumulator;
           }
-          const [type] = parameter.type.names;
+          let [type] = parameter.type.names;
+          let items;
+          switch (type) {
+            case 'Array.<string>': {
+              type = 'array';
+              items = { type: 'number' };
+              break;
+            }
+            case 'Array.<number>': {
+              type = 'array';
+              items = { type: 'string' };
+              break;
+            }
+            default: {
+              break;
+            }
+          }
           const description = parameter.description;
           let name;
           try {
@@ -171,6 +186,7 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
             [name]: {
               type,
               description,
+              items,
             },
           };
           return accumulator;
@@ -179,12 +195,11 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
           title: 'Parameters',
           type: 'object',
           'default': exampleJSON,
-          required: requiredSchema,
+          required: [],
           properties: {},
         },
       );
       const schemaPostJsdoc = schema.post.requestBody.content['application/json'].schema;
-      schemaPostJsdoc.required.push('params');
       schemaPostJsdoc.properties.params = propertiesParameters;
     }
     temporaryDocument.paths[`${api}${apiName}`] = schema;

@@ -4,6 +4,7 @@
  * @param {object} parameters - params
  * @param {string} parameters.id - id
  * @param {string} [parameters.test] - test
+ * @param {string[]} parameters.array - array
  * @tags api, api-v1, api
  * @example
  * {
