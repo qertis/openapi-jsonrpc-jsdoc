@@ -13,6 +13,7 @@ npm i openapi-jsonrpc-jsdoc --save-dev
 ```js
 // api/api-v1.js
 /**
+ * @json-rpc
  * @description Название API
  * @param {object} parameters - params
  * @param {string} parameters.id - id

@@ -13,7 +13,7 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
     dictionaries: ['jsdoc'],
     hierarchy: true,
   });
-  const tags = [];
+  const tags = new Set();
   const temporaryDocument = {
     'x-send-defaults': true,
     'openapi': '3.0.0',
@@ -59,17 +59,25 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
         BasicAuth: [],
       },
     ],
-    'tags': tags,
+    'tags': [],
   };
   const requiredSchema = ['method', 'id', 'jsonrpc'];
-  for (const module of documents) {
-    const apiName = module.meta.filename.replace(/.js$/, '');
+  prepare: for (const module of documents) {
+    let isJsonRpc = false;
 
     if (module.tags && Array.isArray(module.tags)) {
-      for (const tag of module.tags) {
-        tags.push(...new Set(tag.value.split(',').map(t => t.trim())));
+      for (const {title, value} of module.tags) {
+        if (title === 'json-rpc') {
+          isJsonRpc = true;
+        } else if (title === 'tags' && value) {
+          value.split(',').map(t => t.trim()).forEach(t => tags.add(t));
+        }
       }
     }
+    if (!isJsonRpc) {
+      continue prepare;
+    }
+    const apiName = module.meta.filename.replace(/.js$/, '');
 
     const schema = {
       post: {
@@ -77,7 +85,7 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
         deprecated: module.deprecated || false,
         summary: `/${apiName}`,
         description: module.description,
-        tags: tags,
+        tags: Array.from(tags),
         parameters: [],
         responses: {
           '200': {

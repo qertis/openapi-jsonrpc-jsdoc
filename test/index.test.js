@@ -1,7 +1,7 @@
 const test = require('ava');
 const express = require('express');
-const http = require('http');
-const path = require('path');
+const http = require('node:http');
+const path = require('node:path');
 const OpenApiValidator = require('express-openapi-validator');
 const openapiJSONRpcJSDoc = require('../index');
 
@@ -60,6 +60,7 @@ test('t1', t => {
   t.false(v1Test.post.deprecated);
   t.is(typeof v1Test.post.description, 'string');
   t.true(Array.isArray(v1Test.post.tags));
+  t.deepEqual(v1Test.post.tags, Array.from(new Set(v1Test.post.tags)));
   t.true(Array.isArray(v1Test.post.parameters));
   const v1RequestBodySchema = v1Test.post.requestBody.content['application/json'].schema;
   t.is(v1RequestBodySchema.type, 'object');
