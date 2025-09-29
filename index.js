@@ -176,8 +176,12 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
               break;
             }
             case 'enum': {
-              type = 'string';
               enumData = parameter.type.names;
+              if (parameter.type.names.every(n => !Number.isNaN(Number(n)))) {
+                type = 'number';
+              } else {
+                type = 'string';
+              }
               break;
             }
             default: {
