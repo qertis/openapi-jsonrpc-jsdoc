@@ -154,8 +154,16 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
           if (parameter.type.names[0] === 'object') {
             return accumulator;
           }
-          let [type] = parameter.type.names;
+          let type;
+          if (parameter.type.names.length === 0) {
+            type = 'null';
+          } else if (parameter.type.names.length === 1) {
+            type = parameter.type.names[0];
+          } else {
+            type = 'enum';
+          }
           let items;
+          let enumData;
           switch (type) {
             case 'Array.<string>': {
               type = 'array';
@@ -165,6 +173,11 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
             case 'Array.<number>': {
               type = 'array';
               items = { type: 'string' };
+              break;
+            }
+            case 'enum': {
+              type = 'string';
+              enumData = parameter.type.names;
               break;
             }
             default: {
@@ -187,6 +200,7 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
               type,
               description,
               items,
+              enum: enumData,
             },
           };
           return accumulator;

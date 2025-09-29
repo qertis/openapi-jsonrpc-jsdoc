@@ -5,6 +5,7 @@
  * @param {string} parameters.id - id
  * @param {string} [parameters.test] - test
  * @param {string[]} parameters.array - array
+ * @param {1|2} parameters.num - enum
  * @tags api, api-v1, api
  * @example
  * {
