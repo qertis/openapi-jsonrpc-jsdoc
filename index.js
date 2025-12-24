@@ -147,6 +147,9 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
 
       const propertiesParameters = module.params.reduce(
         (accumulator, parameter) => {
+          if (parameter.name.startsWith('_')) {
+            return accumulator;
+          }
           if (!parameter.type) {
             throw new Error('JSDoc parameter error: ' + apiName);
           }
@@ -164,6 +167,7 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
           }
           let items;
           let enumData;
+
           switch (type) {
             case 'Array.<string>': {
               type = 'array';
@@ -198,15 +202,20 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
           if (!parameter.optional) {
             accumulator.required.push(name);
           }
-          accumulator.properties = {
-            ...accumulator.properties,
-            [name]: {
-              type,
-              description,
-              items,
-              enum: enumData,
-            },
-          };
+          accumulator.properties[name] = accumulator.properties[name] ?? {};
+          if (type) {
+            accumulator.properties[name].type = type;
+          }
+          if (description) {
+            accumulator.properties[name].description = description;
+          }
+          if (items) {
+            accumulator.properties[name].items = items;
+          }
+          if (enumData) {
+            accumulator.properties[name].enum = enumData;
+          }
+
           return accumulator;
         },
         {

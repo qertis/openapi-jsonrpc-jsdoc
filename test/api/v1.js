@@ -6,6 +6,7 @@
  * @param {string} [parameters.test] - test
  * @param {string[]} parameters.array - array
  * @param {1|2} parameters.num - enum
+ * @param {any} _xxx - xxx
  * @tags api, api-v1, api
  * @example
  * {
@@ -13,6 +14,6 @@
  *    "type": "Note"
  * }
  */
-module.exports = (parameters) => {
+module.exports = (parameters, _xxx) => {
   return parameters.id;
 };
