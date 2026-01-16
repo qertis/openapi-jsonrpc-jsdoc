@@ -167,21 +167,30 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
           }
           let items;
           let enumData;
+          let oneOf;
 
           switch (type) {
             case 'Array.<string>': {
               type = 'array';
-              items = { type: 'number' };
+              items = { type: 'string' };
               break;
             }
             case 'Array.<number>': {
               type = 'array';
-              items = { type: 'string' };
+              items = { type: 'number' };
               break;
             }
             case 'enum': {
               enumData = parameter.type.names;
-              if (parameter.type.names.every(n => !Number.isNaN(Number(n)))) {
+              oneOf = parameter.type.names.map((n) => {
+                if (!Number.isNaN(Number(n))) {
+                  return Number(n);
+                }
+                return n;
+              });
+              if (parameter.type.names.every(n => Number.isInteger(Number(n)))) {
+                type = 'integer';
+              } else if (parameter.type.names.every(n => !Number.isNaN(Number(n)))) {
                 type = 'number';
               } else {
                 type = 'string';
@@ -214,6 +223,9 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
           }
           if (enumData) {
             accumulator.properties[name].enum = enumData;
+          }
+          if (oneOf) {
+            accumulator.properties[name].oneOf = oneOf;
           }
 
           return accumulator;
