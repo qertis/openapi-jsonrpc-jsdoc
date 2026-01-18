@@ -1,11 +1,13 @@
-const test = require('ava');
-const express = require('express');
-const http = require('node:http');
-const path = require('node:path');
-const OpenApiValidator = require('express-openapi-validator');
-const openapiJSONRpcJSDoc = require('../index');
+import test from 'ava';
+import express from 'express';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import OpenApiValidator from 'express-openapi-validator';
+import openapiJSONRpcJSDoc from '../index.mjs';
 
-const port = 9000;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 const apiSpec = path.join(__dirname, './fixture/api.json');
 
@@ -34,7 +36,7 @@ test.before(async t => {
     });
   });
 
-  app.listen(port);
+  t.context.server = app.listen(0);
 
   t.context.data = await openapiJSONRpcJSDoc({
     api: '/api/',
@@ -46,12 +48,18 @@ test.before(async t => {
     },
     servers: [
       {
-        url: 'http://0.0.0.0:' + port,
+        url: 'http://0.0.0.0:' + t.context.server.address().port,
       },
     ],
     packageUrl: path.resolve('./package.json'),
     files: './test/api/*.js',
   });
+});
+
+test.after.always(t => {
+  if (t.context.server) {
+    t.context.server.close();
+  }
 });
 
 test('t1', t => {
@@ -75,37 +83,22 @@ test('t2', t => {
   t.true(v2Test.post.deprecated);
 });
 
-test.cb('openapi validator', (t) => {
+test('openapi validator', async (t) => {
   t.timeout(10000);
   const data = '{"jsonrpc":"2.0","method":"ping","id":1}';
 
-  const options = {
-    hostname: '127.0.0.1',
-    port: port,
-    path: '/api/api-v1',
+  const response = await fetch(`http://127.0.0.1:${t.context.server.address().port}/api/api-v1`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Content-Length': data.length,
-    }
-  }
-  const req = http.request(options, res => {
-    let data = '';
-    if (res.statusCode >= 400) {
-      t.fail('Status Code:' + res.statusCode);
-      return;
-    }
-    res.on('data', chunk => {
-      data += chunk;
-    });
-    res.on('end', () => {
-      t.is('pong', data);
-      t.pass();
-    })
-  })
-  .on('error', err => {
-    t.fail(err.message);
+      'Content-Length': data.length.toString(),
+    },
+    body: data,
   });
-  req.write(data);
-  req.end();
+  if (response.status >= 400) {
+    t.fail('Status Code: ' + response.status);
+    return;
+  }
+  const result = await response.text();
+  t.is('pong', result);
 });

@@ -1,6 +1,6 @@
-const jsdocx = require('jsdoc-x');
+import jsdocx from 'jsdoc-x';
 
-async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, servers, api = '/' }) {
+export default async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, servers, api = '/' }) {
   const [package_, ...documents] = await jsdocx.parse({
     files,
     package: packageUrl,
@@ -245,5 +245,3 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
   }
   return temporaryDocument;
 }
-
-module.exports = openapiJsonrpcJsdoc;

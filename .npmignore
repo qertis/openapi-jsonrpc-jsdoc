@@ -2,3 +2,4 @@ test/
 .github/
 .idea/
 out/
+.gitignore

@@ -2,7 +2,7 @@
 
 ## Install
 
-```fish
+```bash
 npm i openapi-jsonrpc-jsdoc
 ```
 
