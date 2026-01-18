@@ -13,7 +13,6 @@ export default async function openapiJsonrpcJsdoc({ files, securitySchemes = {},
     dictionaries: ['jsdoc'],
     hierarchy: true,
   });
-  const tags = new Set();
   const temporaryDocument = {
     'x-send-defaults': true,
     'openapi': '3.0.0',
@@ -35,22 +34,22 @@ export default async function openapiJsonrpcJsdoc({ files, securitySchemes = {},
       schemas: {
         Error: {
           required: [
-            "error",
-            "id",
-            "jsonrpc"
+            'error',
+            'id',
+            'jsonrpc',
           ],
           properties: {
-            "id": {
-              "type": "integer",
-              "format": "int32"
+            id: {
+              type: 'integer',
+              format: 'int32',
             },
-            "error": {
-              "type": "object"
+            error: {
+              type: 'object',
             },
-            "jsonrpc": {
-              "type": "string"
-            }
-          }
+            jsonrpc: {
+              type: 'string',
+            },
+          },
         },
       }
     },
@@ -64,12 +63,13 @@ export default async function openapiJsonrpcJsdoc({ files, securitySchemes = {},
   const requiredSchema = ['method', 'jsonrpc'];
   prepare: for (const module of documents) {
     let isJsonRpc = false;
+    const tags = new Set();
 
     if (module.tags && Array.isArray(module.tags)) {
       for (const {title, value} of module.tags) {
         if (title === 'json-rpc') {
           isJsonRpc = true;
-        } else if (title === 'tags' && value) {
+        } else if (value && ['tags', 'tag'].includes(title)) {
           value.split(',').map(t => t.trim()).forEach(t => tags.add(t));
         }
       }
@@ -77,11 +77,12 @@ export default async function openapiJsonrpcJsdoc({ files, securitySchemes = {},
     if (!isJsonRpc) {
       continue prepare;
     }
-    const apiName = module.meta.filename.replace(/\.js$/, '');
+    const {filename} = module.meta;
+    const apiName = filename.replace(/\.js$/, '');
 
     const schema = {
       post: {
-        operationId: `${module.meta.filename}`,
+        operationId: filename,
         deprecated: module.deprecated || false,
         summary: `/${apiName}`,
         description: module.description,
@@ -90,13 +91,13 @@ export default async function openapiJsonrpcJsdoc({ files, securitySchemes = {},
         responses: {
           '200': {
             description: 'OK',
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                },
+              },
+            },
           },
           default: {
             description: 'unexpected error',
