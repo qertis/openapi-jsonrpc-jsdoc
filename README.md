@@ -3,7 +3,7 @@
 ## Install
 
 ```fish
-npm i openapi-jsonrpc-jsdoc --save-dev
+npm i openapi-jsonrpc-jsdoc
 ```
 
 ## Examples

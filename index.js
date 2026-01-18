@@ -77,7 +77,7 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
     if (!isJsonRpc) {
       continue prepare;
     }
-    const apiName = module.meta.filename.replace(/.js$/, '');
+    const apiName = module.meta.filename.replace(/\.js$/, '');
 
     const schema = {
       post: {
@@ -103,7 +103,7 @@ async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, se
             content: {
               'application/json': {
                 schema: {
-                  $ref: '#/components/schemas/Error'
+                  $ref: '#/components/schemas/Error',
                 }
               }
             }
