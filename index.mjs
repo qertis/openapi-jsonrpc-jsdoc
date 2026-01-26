@@ -1,18 +1,17 @@
-import jsdocx from 'jsdoc-x';
+import jsdoc from 'jsdoc-api';
 
 export default async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, servers, api = '/' }) {
-  const [package_, ...documents] = await jsdocx.parse({
-    files,
+  const allData = await jsdoc.explain({
+    files: Array.isArray(files) ? files : [files],
     package: packageUrl,
     access: 'public',
     encoding: 'utf8',
-    module: true,
     undocumented: false,
-    sort: 'scope',
     allowUnknownTags: true,
     dictionaries: ['jsdoc'],
-    hierarchy: true,
   });
+  const package_ = allData.find(item => item.kind === 'package');
+  const documents = allData.filter(item => item.kind !== 'package');
   const temporaryDocument = {
     'x-send-defaults': true,
     'openapi': '3.0.0',
