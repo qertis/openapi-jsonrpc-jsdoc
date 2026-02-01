@@ -238,8 +238,10 @@ export default async function openapiJsonrpcJsdoc({ files, securitySchemes = {},
           properties: {},
         },
       );
-      const schemaPostJsdoc = schema.post.requestBody.content['application/json'].schema;
-      schemaPostJsdoc.properties.params = propertiesParameters;
+      if (exampleJSON !== null) {
+        const schemaPostJsdoc = schema.post.requestBody.content['application/json'].schema;
+        schemaPostJsdoc.properties.params = propertiesParameters;
+      }
     }
     temporaryDocument.paths[`${api}${apiName}`] = schema;
   }
