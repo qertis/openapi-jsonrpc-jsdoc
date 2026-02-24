@@ -8,7 +8,7 @@ npm i openapi-jsonrpc-jsdoc
 
 ## Examples
 
-### Create JSON-RPC Method
+### Usage Example
 
 ```js
 // api/api-v1.js
@@ -28,11 +28,9 @@ module.exports = (parameters) => {
 }
 ```
 
-### Run package
+### Generate OpenAPI JSON
 
 ```js
-// index.js
-const fs = require('fs');
 const openapiJSONRpcJSDoc = require('openapi-jsonrpc-jsdoc');
 openapiJSONRpcJSDoc({
     api: '/',
@@ -44,7 +42,7 @@ openapiJSONRpcJSDoc({
     packageUrl: './package.json',
     files: './api/*.js',
 }).then(data => {
-  fs.writeFileSync('openapi.json', JSON.stringify(data, null, 2));  
+  JSON.stringify(data, null, 2);// openapi.json
 });
 ```
 

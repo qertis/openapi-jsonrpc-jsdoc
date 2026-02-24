@@ -1,5 +1,132 @@
 import jsdoc from 'jsdoc-api';
 
+function extractName(name) {
+  try {
+    return name.match(/\.(.+)/i)[1]; //eslint-disable-line
+  } catch {
+    return name;
+  }
+}
+
+function resolveSchemaFromTypeNames(names) {
+  let type;
+  let format;
+  let items;
+  let oneOf;
+  let nullable;
+  let constant;
+  let enumData;
+
+  if (names.length === 0) {
+    type = 'null';
+  } else if (names.length === 1) {
+    [type] = names;
+  } else {
+    type = 'enum';
+  }
+
+  switch (type) {
+    case 'Array.<string>': {
+      type = 'array';
+      items = {type: 'string'};
+      break;
+    }
+    case 'Array.<number>': {
+      type = 'array';
+      items = {type: 'number'};
+      break;
+    }
+    case 'URL': {
+      type = 'string';
+      format = 'url';
+      break;
+    }
+    case 'String':
+    case 'string': {
+      type = 'string';
+      break;
+    }
+    case 'Number':
+    case 'number': {
+      type = 'number';
+      break;
+    }
+    case 'Boolean':
+    case 'boolean': {
+      type = 'boolean';
+      break;
+    }
+    case 'Date': {
+      type = 'string';
+      format = 'date-time';
+      break;
+    }
+    case 'enum': {
+      enumData = names;
+      if (enumData.includes('null')) {
+        nullable = true;
+        enumData = enumData.filter(n => n !== 'null');
+      }
+      oneOf = enumData.map((n) => {
+        if (!Number.isNaN(Number(n))) {
+          return Number(n);
+        }
+        return n;
+      });
+
+      if (enumData.every(n => Number.isInteger(Number(n)))) {
+        type = 'integer';
+      } else if (enumData.every(n => !Number.isNaN(Number(n)))) {
+        type = 'number';
+      } else if (enumData.every(n => n?.toLowerCase() === 'boolean')) {
+        type = 'boolean';
+      } else if (enumData.every(n => n?.toLowerCase() === 'number')) {
+        type = 'number';
+      } else if (enumData.every(n => n?.toLowerCase() === 'string')) {
+        type = 'string';
+      } else if (enumData.every(n => n?.toLowerCase() === 'date')) {
+        type = 'string';
+        format = 'date-time';
+      } else if (enumData.every(n => n === 'URL')) {
+        type = 'string';
+        format = 'url';
+      } else if (enumData.every(n => n?.toLowerCase() === 'true')) {
+        type = 'boolean';
+        constant = true;
+      } else if (enumData.every(n => n?.toLowerCase() === 'false')) {
+        type = 'boolean';
+        constant = false;
+      } else {
+        type = 'string';
+      }
+
+      if (enumData?.length === 1 && oneOf?.length === 1) {
+        if (enumData[0] === oneOf[0]) {
+          if (!format) {
+            [format] = enumData;
+          }
+          oneOf = undefined;
+          enumData = undefined;
+        }
+      }
+      break;
+    }
+    default: {
+      break;
+    }
+  }
+
+  return {
+    type,
+    format,
+    oneOf,
+    nullable,
+    items,
+    constant,
+    enumData,
+  };
+}
+
 export default async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, servers, api = '/' }) {
   const allData = await jsdoc.explain({
     files: Array.isArray(files) ? files : [files],
@@ -157,61 +284,38 @@ export default async function openapiJsonrpcJsdoc({ files, securitySchemes = {},
           if (parameter.type.names[0] === 'object') {
             return accumulator;
           }
-          let type;
-          if (parameter.type.names.length === 0) {
-            type = 'null';
-          } else if (parameter.type.names.length === 1) {
-            type = parameter.type.names[0];
-          } else {
-            type = 'enum';
-          }
-          let items;
-          let enumData;
-          let oneOf;
 
-          switch (type) {
-            case 'Array.<string>': {
-              type = 'array';
-              items = { type: 'string' };
-              break;
-            }
-            case 'Array.<number>': {
-              type = 'array';
-              items = { type: 'number' };
-              break;
-            }
-            case 'enum': {
-              enumData = parameter.type.names;
-              oneOf = parameter.type.names.map((n) => {
-                if (!Number.isNaN(Number(n))) {
-                  return Number(n);
-                }
-                return n;
-              });
-              if (parameter.type.names.every(n => Number.isInteger(Number(n)))) {
-                type = 'integer';
-              } else if (parameter.type.names.every(n => !Number.isNaN(Number(n)))) {
-                type = 'number';
-              } else {
-                type = 'string';
-              }
-              break;
-            }
-            default: {
-              break;
-            }
-          }
           const description = parameter.description;
-          let name;
-          try {
-            name = parameter.name.match(/\.(.+)/i)[1]; //eslint-disable-line
-          } catch {
-            name = parameter.name;
-          }
+          const name = extractName(parameter.name);
+          accumulator.properties[name] = accumulator.properties[name] ?? {};
+
+          const {
+            items,
+            constant,
+            enumData,
+            type,
+            format,
+            oneOf,
+            nullable,
+          } = resolveSchemaFromTypeNames(parameter.type.names)
           if (!parameter.optional) {
             accumulator.required.push(name);
           }
-          accumulator.properties[name] = accumulator.properties[name] ?? {};
+          if (nullable) {
+            accumulator.properties[name].nullable = nullable;
+          }
+          if (constant) {
+            accumulator.properties[name].const = constant;
+          }
+          if (format) {
+            accumulator.properties[name].format = format;
+          }
+          if (enumData) {
+            accumulator.properties[name].enum = enumData;
+          }
+          if (oneOf) {
+            accumulator.properties[name].oneOf = oneOf;
+          }
           if (type) {
             accumulator.properties[name].type = type;
           }
@@ -221,13 +325,6 @@ export default async function openapiJsonrpcJsdoc({ files, securitySchemes = {},
           if (items) {
             accumulator.properties[name].items = items;
           }
-          if (enumData) {
-            accumulator.properties[name].enum = enumData;
-          }
-          if (oneOf) {
-            accumulator.properties[name].oneOf = oneOf;
-          }
-
           return accumulator;
         },
         {
