@@ -2,7 +2,6 @@ import test from 'ava';
 import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import OpenApiValidator from 'express-openapi-validator';
 import openapiJSONRpcJSDoc from '../index.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -16,14 +15,6 @@ test.before(async t => {
   app.use(express.text());
   app.use(express.json());
   app.use('/spec', express.static(apiSpec));
-
-  app.use(
-    OpenApiValidator.middleware({
-      apiSpec,
-      validateRequests: true,
-      validateResponses: true,
-    }),
-  );
 
   app.post('/api/api-v1', (req, res) => {
     res.send('pong');

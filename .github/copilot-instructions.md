@@ -2,7 +2,7 @@
 
 **ALWAYS follow these instructions first. Only fall back to search or additional context gathering if the information here is incomplete or found to be in error.**
 
-OpenAPI JSON-RPC JSDoc is a Node.js library that generates OpenAPI 3.0 specifications from JSDoc comments in JavaScript files containing JSON-RPC API methods. It parses JSDoc annotations and creates complete OpenAPI schemas with request/response structures for JSON-RPC 2.0 APIs.
+OpenAPI JSON-RPC JSDoc is a Node.js library that generates OpenAPI 3.1 specifications from JSDoc comments in JavaScript files containing JSON-RPC API methods. It parses JSDoc annotations and creates complete OpenAPI schemas with request/response structures for JSON-RPC 2.0 APIs.
 
 ## Working Effectively
 
@@ -103,7 +103,7 @@ After making any changes to the library code (`index.js`), **ALWAYS** run these 
 
 ### Dependencies
 - **Production**: `jsdoc-x ~4.1.0` (JSDoc parsing)
-- **Development**: `ava ~3.15.0` (testing), `express ~5.1.0` + `express-openapi-validator ~5.5.3` (integration testing)
+- **Development**: `ava ~3.x` (testing), `express ~5.x`
 - **Security warnings**: 9 known vulnerabilities in dev dependencies - does not affect production usage
 
 ## Common Development Tasks

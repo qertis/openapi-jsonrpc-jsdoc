@@ -52,7 +52,7 @@ openapiJSONRpcJSDoc({
 ```json
 {
   "x-send-defaults": true,
-  "openapi": "3.0.0",
+  "openapi": "3.1.0",
   "x-api-id": "json-rpc-example",
   "x-headers": [],
   "x-explorer-enabled": true,

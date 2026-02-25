@@ -8,24 +8,27 @@ function extractName(name) {
   }
 }
 
+function extractTypeName(names = []) {
+  let typeName;
+  if (names.length === 0) {
+    typeName = 'null';
+  } else if (names.length === 1) {
+    [typeName] = names;
+  } else {
+    typeName = 'enum';
+  }
+  return typeName;
+}
+
 function resolveSchemaFromTypeNames(names) {
   let type;
   let format;
   let items;
-  let oneOf;
   let nullable;
   let constant;
   let enumData;
 
-  if (names.length === 0) {
-    type = 'null';
-  } else if (names.length === 1) {
-    [type] = names;
-  } else {
-    type = 'enum';
-  }
-
-  switch (type) {
+  switch (extractTypeName(names)) {
     case 'Array.<string>': {
       type = 'array';
       items = {type: 'string'};
@@ -67,7 +70,7 @@ function resolveSchemaFromTypeNames(names) {
         nullable = true;
         enumData = enumData.filter(n => n !== 'null');
       }
-      oneOf = enumData.map((n) => {
+      enumData = enumData.map((n) => {
         if (!Number.isNaN(Number(n))) {
           return Number(n);
         }
@@ -100,14 +103,11 @@ function resolveSchemaFromTypeNames(names) {
         type = 'string';
       }
 
-      if (enumData?.length === 1 && oneOf?.length === 1) {
-        if (enumData[0] === oneOf[0]) {
-          if (!format) {
-            [format] = enumData;
-          }
-          oneOf = undefined;
-          enumData = undefined;
+      if (enumData?.length === 1) {
+        if (!format) {
+          [format] = enumData;
         }
+        enumData = undefined;
       }
       break;
     }
@@ -119,7 +119,6 @@ function resolveSchemaFromTypeNames(names) {
   return {
     type,
     format,
-    oneOf,
     nullable,
     items,
     constant,
@@ -127,7 +126,14 @@ function resolveSchemaFromTypeNames(names) {
   };
 }
 
-export default async function openapiJsonrpcJsdoc({ files, securitySchemes = {}, packageUrl, servers, api = '/' }) {
+export default async function openapiJsonrpcJsdoc({
+  openapi = '3.1.0',
+  files,
+  securitySchemes = {},
+  packageUrl,
+  servers,
+  api = '/',
+}) {
   const allData = await jsdoc.explain({
     files: Array.isArray(files) ? files : [files],
     package: packageUrl,
@@ -136,12 +142,13 @@ export default async function openapiJsonrpcJsdoc({ files, securitySchemes = {},
     undocumented: false,
     allowUnknownTags: true,
     dictionaries: ['jsdoc'],
+    cache: true,
   });
   const package_ = allData.find(item => item.kind === 'package');
   const documents = allData.filter(item => item.kind !== 'package');
   const temporaryDocument = {
+    'openapi': openapi,
     'x-send-defaults': true,
-    'openapi': '3.0.0',
     'x-api-id': 'json-rpc-example',
     'x-headers': [],
     'x-explorer-enabled': true,
@@ -179,11 +186,7 @@ export default async function openapiJsonrpcJsdoc({ files, securitySchemes = {},
         },
       }
     },
-    'security': [
-      {
-        BasicAuth: [],
-      },
-    ],
+    'security': Object.keys(securitySchemes).map(val => ({ [val]: [] })),
     'tags': [],
   };
   const requiredSchema = ['method', 'jsonrpc'];
@@ -237,6 +240,7 @@ export default async function openapiJsonrpcJsdoc({ files, securitySchemes = {},
           }
         },
         requestBody: {
+          required: true,
           content: {
             'application/json': {
               schema: {
@@ -249,9 +253,7 @@ export default async function openapiJsonrpcJsdoc({ files, securitySchemes = {},
                     description: `API method ${apiName}`,
                   },
                   id: {
-                    type: 'integer',
-                    default: 1,
-                    format: 'int32',
+                    type: ['string'],
                     description: 'Request ID',
                   },
                   jsonrpc: {
@@ -285,9 +287,10 @@ export default async function openapiJsonrpcJsdoc({ files, securitySchemes = {},
             return accumulator;
           }
 
-          const description = parameter.description;
           const name = extractName(parameter.name);
           accumulator.properties[name] = accumulator.properties[name] ?? {};
+          const description = parameter.description;
+          const defaultValue = parameter.defaultvalue;
 
           const {
             items,
@@ -295,7 +298,6 @@ export default async function openapiJsonrpcJsdoc({ files, securitySchemes = {},
             enumData,
             type,
             format,
-            oneOf,
             nullable,
           } = resolveSchemaFromTypeNames(parameter.type.names)
           if (!parameter.optional) {
@@ -303,6 +305,9 @@ export default async function openapiJsonrpcJsdoc({ files, securitySchemes = {},
           }
           if (nullable) {
             accumulator.properties[name].nullable = nullable;
+          }
+          if (defaultValue) {
+            accumulator.properties[name].default = defaultValue;
           }
           if (constant) {
             accumulator.properties[name].const = constant;
@@ -312,9 +317,6 @@ export default async function openapiJsonrpcJsdoc({ files, securitySchemes = {},
           }
           if (enumData) {
             accumulator.properties[name].enum = enumData;
-          }
-          if (oneOf) {
-            accumulator.properties[name].oneOf = oneOf;
           }
           if (type) {
             accumulator.properties[name].type = type;
