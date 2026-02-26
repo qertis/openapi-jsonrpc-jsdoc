@@ -20,6 +20,15 @@ function extractTypeName(names = []) {
   return typeName;
 }
 
+function isBigInt64(n) {
+  try {
+    const b = BigInt(n);
+    return b >= -9223372036854775808n && b <= 9223372036854775807n;
+  } catch {
+    return false;
+  }
+}
+
 function resolveSchemaFromTypeNames(names) {
   let type;
   let format;
@@ -73,20 +82,29 @@ function resolveSchemaFromTypeNames(names) {
       enumData = enumData.map((n) => {
         if (!Number.isNaN(Number(n))) {
           return Number(n);
+        } else if (isBigInt64(n)) {
+          return n;
         }
-        return n;
+        return String(n);
       });
 
-      if (enumData.every(n => Number.isInteger(Number(n)))) {
+      if (enumData.every(n => Number.isSafeInteger(n))) {
         type = 'integer';
+      } else if (enumData.every(n => Number.isInteger(n))) {
+        type = 'number';
+        format = 'float';
+      } else if (enumData.every(n => typeof n === 'number' && n === Math.fround(n))) {
+        type = 'number';
+        format = 'double';
+      } else  if (enumData.every(n => isBigInt64(n))) {
+        type = 'integer';
+        format = 'int64';
       } else if (enumData.every(n => !Number.isNaN(Number(n)))) {
         type = 'number';
       } else if (enumData.every(n => n?.toLowerCase() === 'boolean')) {
         type = 'boolean';
       } else if (enumData.every(n => n?.toLowerCase() === 'number')) {
         type = 'number';
-      } else if (enumData.every(n => n?.toLowerCase() === 'string')) {
-        type = 'string';
       } else if (enumData.every(n => n?.toLowerCase() === 'date')) {
         type = 'string';
         format = 'date-time';
@@ -99,8 +117,13 @@ function resolveSchemaFromTypeNames(names) {
       } else if (enumData.every(n => n?.toLowerCase() === 'false')) {
         type = 'boolean';
         constant = false;
-      } else {
+      } else if (enumData.every(n => typeof n === 'string')) {
         type = 'string';
+      } else if (enumData.length === 1) {
+        type = enumData[0];
+        constant = true;
+      } else {
+        type = undefined;
       }
 
       if (enumData?.length === 1) {
@@ -108,6 +131,8 @@ function resolveSchemaFromTypeNames(names) {
           [format] = enumData;
         }
         enumData = undefined;
+      } else if (nullable) {
+        enumData.push(null);
       }
       break;
     }
@@ -128,37 +153,40 @@ function resolveSchemaFromTypeNames(names) {
 
 export default async function openapiJsonrpcJsdoc({
   openapi = '3.1.0',
+  encoding = 'utf8',
+  access = 'public',
   files,
+  info = {},
   securitySchemes = {},
   packageUrl,
   servers,
   api = '/',
+  samples = ['node', 'javascript'],
+  ...xHeaders
 }) {
   const allData = await jsdoc.explain({
     files: Array.isArray(files) ? files : [files],
-    package: packageUrl,
-    access: 'public',
-    encoding: 'utf8',
+    packageJson: packageUrl,
+    access,
+    encoding,
     undocumented: false,
     allowUnknownTags: true,
     dictionaries: ['jsdoc'],
     cache: true,
+    samples,
   });
   const package_ = allData.find(item => item.kind === 'package');
   const documents = allData.filter(item => item.kind !== 'package');
   const temporaryDocument = {
     'openapi': openapi,
-    'x-send-defaults': true,
-    'x-api-id': 'json-rpc-example',
-    'x-headers': [],
-    'x-explorer-enabled': true,
-    'x-proxy-enabled': true,
-    'x-samples-enabled': true,
-    'x-samples-languages': ['node', 'javascript'],
+    'x-samples-enabled': samples.length > 0,
+    'x-samples-languages': samples,
+    ...xHeaders,
     'info': {
       version: package_.version,
       title: package_.name,
       description: package_.description,
+      ...info,
     },
     'servers': servers,
     'paths': {},
@@ -166,6 +194,7 @@ export default async function openapiJsonrpcJsdoc({
       securitySchemes,
       schemas: {
         Error: {
+          type: 'object',
           required: [
             'error',
             'id',
@@ -173,14 +202,14 @@ export default async function openapiJsonrpcJsdoc({
           ],
           properties: {
             id: {
-              type: 'integer',
-              format: 'int32',
+              type: ['string', 'integer'],
             },
             error: {
               type: 'object',
             },
             jsonrpc: {
               type: 'string',
+              default: '2.0',
             },
           },
         },
@@ -189,6 +218,9 @@ export default async function openapiJsonrpcJsdoc({
     'security': Object.keys(securitySchemes).map(val => ({ [val]: [] })),
     'tags': [],
   };
+  if (!temporaryDocument.info.title) {
+    throw new Error('Info title is required');
+  }
   const requiredSchema = ['method', 'jsonrpc'];
   prepare: for (const module of documents) {
     let isJsonRpc = false;
@@ -249,11 +281,10 @@ export default async function openapiJsonrpcJsdoc({
                 properties: {
                   method: {
                     type: 'string',
-                    default: apiName,
                     description: `API method ${apiName}`,
                   },
                   id: {
-                    type: ['string'],
+                    type: ['string', 'integer'],
                     description: 'Request ID',
                   },
                   jsonrpc: {

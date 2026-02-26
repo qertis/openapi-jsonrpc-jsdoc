@@ -1,6 +1,6 @@
 {
   "name": "openapi-jsonrpc-jsdoc",
-  "version": "1.4.3",
+  "version": "1.5.0",
   "description": "Transform JSDoc-annotated JSON-RPC 2.0 methods into OpenAPI specifications.",
   "main": "index.mjs",
   "type": "module",

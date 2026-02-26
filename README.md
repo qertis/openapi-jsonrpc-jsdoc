@@ -17,15 +17,19 @@ npm i openapi-jsonrpc-jsdoc
  * @description Название API
  * @param {object} parameters - params
  * @param {string} parameters.id - id
+ * @param {string} [parameters.test] - test
+ * @param {string[]} parameters.array - array
+ * @param {1|2} parameters.num - enum
+ * @tags api
  * @example
  * {
- *    "@context": "https://www.w3.org/ns/activitystreams",
- *    "type": "Note"
+ *    "id": "https://www.w3.org/ns/activitystreams"
  * }
  */
 module.exports = (parameters) => {
-    return parameters.id;
-}
+  return parameters.id;
+};
+
 ```
 
 ### Generate OpenAPI JSON
@@ -39,6 +43,9 @@ openapiJSONRpcJSDoc({
             url: '0.0.0.0:8080',
          },
     ],
+    info: {
+      title: 'Test API',
+    },
     packageUrl: './package.json',
     files: './api/*.js',
 }).then(data => {
@@ -51,22 +58,16 @@ openapiJSONRpcJSDoc({
 
 ```json
 {
-  "x-send-defaults": true,
   "openapi": "3.1.0",
-  "x-api-id": "json-rpc-example",
-  "x-headers": [],
-  "x-explorer-enabled": true,
-  "x-proxy-enabled": true,
   "x-samples-enabled": true,
   "x-samples-languages": [
-    "curl",
     "node",
     "javascript"
   ],
   "info": {
-    "version": "1.0.4",
-    "title": "openapi-jsonrpc-jsdoc",
-    "description": "OpenAPI generator"
+    "version": "1.4.3",
+    "title": "Test API",
+    "description": "Transform JSDoc-annotated JSON-RPC 2.0 methods into OpenAPI specifications."
   },
   "servers": [
     {
@@ -81,7 +82,7 @@ openapiJSONRpcJSDoc({
         "summary": "/v1",
         "description": "Название API",
         "tags": [
-          "JSONRPC"
+          "api"
         ],
         "parameters": [],
         "responses": {
@@ -107,32 +108,31 @@ openapiJSONRpcJSDoc({
           }
         },
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "required": [
                   "method",
-                  "id",
-                  "jsonrpc",
-                  "params"
+                  "jsonrpc"
                 ],
                 "properties": {
                   "method": {
                     "type": "string",
-                    "default": "v1",
                     "description": "API method v1"
                   },
                   "id": {
-                    "type": "integer",
-                    "default": 1,
-                    "format": "int32",
+                    "type": [
+                      "string",
+                      "integer"
+                    ],
                     "description": "Request ID"
                   },
                   "jsonrpc": {
                     "type": "string",
                     "default": "2.0",
-                    "description": "JSON-RPC Version (2.0)"
+                    "description": "JSON-RPC 2.0 protocol"
                   },
                   "params": {
                     "title": "Parameters",
@@ -142,83 +142,35 @@ openapiJSONRpcJSDoc({
                       "type": "Note"
                     },
                     "required": [
-                      "method",
                       "id",
-                      "jsonrpc",
-                      "id"
+                      "array",
+                      "num"
                     ],
                     "properties": {
                       "id": {
                         "type": "string",
                         "description": "id"
+                      },
+                      "test": {
+                        "type": "string",
+                        "description": "test"
+                      },
+                      "array": {
+                        "type": "array",
+                        "description": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "num": {
+                        "enum": [
+                          1,
+                          2
+                        ],
+                        "type": "integer",
+                        "description": "enum"
                       }
                     }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v2": {
-      "post": {
-        "operationId": "v2.js",
-        "deprecated": true,
-        "summary": "/v2",
-        "description": "Название API 2",
-        "tags": [
-          "JSONRPC"
-        ],
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "unexpected error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "method",
-                  "id",
-                  "jsonrpc"
-                ],
-                "properties": {
-                  "method": {
-                    "type": "string",
-                    "default": "v2",
-                    "description": "API method v2"
-                  },
-                  "id": {
-                    "type": "integer",
-                    "default": 1,
-                    "format": "int32",
-                    "description": "Request ID"
-                  },
-                  "jsonrpc": {
-                    "type": "string",
-                    "default": "2.0",
-                    "description": "JSON-RPC Version (2.0)"
                   }
                 }
               }
@@ -232,11 +184,12 @@ openapiJSONRpcJSDoc({
     "securitySchemes": {
       "BasicAuth": {
         "type": "http",
-        "scheme": "digest"
+        "scheme": "basic"
       }
     },
     "schemas": {
       "Error": {
+        "type": "object",
         "required": [
           "error",
           "id",
@@ -244,14 +197,17 @@ openapiJSONRpcJSDoc({
         ],
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": [
+              "string",
+              "integer"
+            ]
           },
           "error": {
             "type": "object"
           },
           "jsonrpc": {
-            "type": "string"
+            "type": "string",
+            "default": "2.0"
           }
         }
       }

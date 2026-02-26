@@ -34,7 +34,7 @@ test.before(async t => {
     securitySchemes: {
       BasicAuth: {
         type: 'http',
-        scheme: 'digest',
+        scheme: 'basic',
       },
     },
     servers: [
@@ -42,8 +42,16 @@ test.before(async t => {
         url: 'http://0.0.0.0:' + t.context.server.address().port,
       },
     ],
+    info: {
+      title: 'Test API',
+    },
     packageUrl: path.resolve('./package.json'),
     files: './test/api/*.js',
+    'x-send-defaults': true,
+    'x-api-id': 'json-rpc-example',
+    'x-headers': [],
+    'x-explorer-enabled': true,
+    'x-proxy-enabled': true,
   });
 });
 
@@ -66,6 +74,7 @@ test('t1', t => {
   t.is(v1RequestBodySchema.properties.params.properties.array.type, 'array');
   t.is(v1RequestBodySchema.type, 'object');
   t.true(v1RequestBodySchema.required.includes('method'));
+  t.true(data['x-explorer-enabled']);
 });
 
 test('t2', t => {
