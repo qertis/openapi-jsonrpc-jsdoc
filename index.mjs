@@ -164,30 +164,40 @@ export default async function openapiJsonrpcJsdoc({
   samples = ['node', 'javascript'],
   ...xHeaders
 }) {
-  const allData = await jsdoc.explain({
-    files: Array.isArray(files) ? files : [files],
-    packageJson: packageUrl,
+  const options = {
     access,
     encoding,
+    samples,
+    files: Array.isArray(files) ? files : [files],
     undocumented: false,
     allowUnknownTags: true,
     dictionaries: ['jsdoc'],
-    cache: true,
-    samples,
-  });
-  const package_ = allData.find(item => item.kind === 'package');
-  const documents = allData.filter(item => item.kind !== 'package');
+  };
+  if (info.title) {
+    options.cache = true;
+  } else {
+    options.package = packageUrl;
+  }
+  let documents;
+  if (options.cache) {
+    documents = await jsdoc.explain(options);
+  } else {
+    const allData = await jsdoc.explain(options);
+    documents = allData.filter(item => item.kind !== 'package');
+    const package_ = allData.find(item => item.kind === 'package');
+    info.version = package_.version;
+    info.title = package_.name;
+    info.description = package_.description;
+  }
+  if (!info.title) {
+    throw new Error('API title is required. Please set packageUrl or info object.');
+  }
   const temporaryDocument = {
     'openapi': openapi,
     'x-samples-enabled': samples.length > 0,
     'x-samples-languages': samples,
     ...xHeaders,
-    'info': {
-      version: package_.version,
-      title: package_.name,
-      description: package_.description,
-      ...info,
-    },
+    'info': info,
     'servers': servers,
     'paths': {},
     'components': {
@@ -218,9 +228,6 @@ export default async function openapiJsonrpcJsdoc({
     'security': Object.keys(securitySchemes).map(val => ({ [val]: [] })),
     'tags': [],
   };
-  if (!temporaryDocument.info.title) {
-    throw new Error('Info title is required');
-  }
   const requiredSchema = ['method', 'jsonrpc'];
   prepare: for (const module of documents) {
     let isJsonRpc = false;
