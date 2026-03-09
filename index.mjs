@@ -307,9 +307,17 @@ export default async function openapiJsonrpcJsdoc({
       },
     };
     if (module.params) {
-      let exampleJSON = null;
+      const prevObject = {
+        title: 'Parameters',
+        type: 'object',
+        required: [],
+        properties: {},
+      };
       if (module.examples?.length) {
-        exampleJSON = JSON.parse(module.examples[0]);
+        const exampleJSON = JSON.parse(module.examples[0]);
+        if (exampleJSON) {
+          prevObject['default'] = exampleJSON;
+        }
       }
 
       const propertiesParameters = module.params.reduce(
@@ -328,7 +336,7 @@ export default async function openapiJsonrpcJsdoc({
           const name = extractName(parameter.name);
           accumulator.properties[name] = accumulator.properties[name] ?? {};
           const description = parameter.description;
-          const defaultValue = parameter.defaultvalue;
+          let defaultValue = parameter.defaultvalue;
 
           const {
             items,
@@ -344,8 +352,12 @@ export default async function openapiJsonrpcJsdoc({
           if (nullable) {
             accumulator.properties[name].nullable = nullable;
           }
-          if (defaultValue) {
-            accumulator.properties[name].default = defaultValue;
+          if (defaultValue !== undefined) {
+            // fix for array type if it is not properly closed in JSDoc
+            if (typeof defaultValue === 'string' && defaultValue.startsWith('[') && !defaultValue.endsWith(']')) {
+              defaultValue += ']';
+            }
+            accumulator.properties[name].default = JSON.parse(defaultValue);
           }
           if (constant) {
             accumulator.properties[name].const = constant;
@@ -367,15 +379,9 @@ export default async function openapiJsonrpcJsdoc({
           }
           return accumulator;
         },
-        {
-          title: 'Parameters',
-          type: 'object',
-          'default': exampleJSON,
-          required: [],
-          properties: {},
-        },
+        prevObject,
       );
-      if (exampleJSON !== null) {
+      if (propertiesParameters) {
         const schemaPostJsdoc = schema.post.requestBody.content['application/json'].schema;
         schemaPostJsdoc.properties.params = propertiesParameters;
       }
