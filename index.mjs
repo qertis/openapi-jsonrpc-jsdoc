@@ -43,6 +43,14 @@ function resolveSchemaFromTypeNames(names) {
       items = {type: 'string'};
       break;
     }
+    case 'Array.<bigint>': {
+      type = 'array';
+      items = {
+        type: 'integer',
+        format: 'int64',
+      };
+      break;
+    }
     case 'Array.<number>': {
       type = 'array';
       items = {type: 'number'};
@@ -250,12 +258,11 @@ export default async function openapiJsonrpcJsdoc({
 
     const schema = {
       post: {
-        operationId: filename,
+        operationId: apiName,
         deprecated: module.deprecated || false,
-        summary: `/${apiName}`,
+        summary: module.summary ?? `/${apiName}`,
         description: module.description,
         tags: Array.from(tags),
-        parameters: [],
         responses: {
           '200': {
             description: 'OK',
@@ -307,12 +314,7 @@ export default async function openapiJsonrpcJsdoc({
       },
     };
     if (module.params) {
-      const prevObject = {
-        title: 'Parameters',
-        type: 'object',
-        required: [],
-        properties: {},
-      };
+      const prevObject = {};
       if (module.examples?.length) {
         const exampleJSON = JSON.parse(module.examples[0]);
         if (exampleJSON) {
@@ -328,13 +330,14 @@ export default async function openapiJsonrpcJsdoc({
           if (!parameter.type) {
             throw new Error('JSDoc parameter error: ' + apiName);
           }
-          // todo поддержать не только object поле в аргументе функции
-          if (parameter.type.names[0] === 'object') {
+          // если главный параметр объявлен как объект - пропускаем его
+          if (parameter.type.names.every(name => name.toLowerCase() === 'object')) {
             return accumulator;
           }
+          const isPlain = !parameter.name.includes('.');
 
           const name = extractName(parameter.name);
-          accumulator.properties[name] = accumulator.properties[name] ?? {};
+          const prop = {};
           const description = parameter.description;
           let defaultValue = parameter.defaultvalue;
 
@@ -347,43 +350,63 @@ export default async function openapiJsonrpcJsdoc({
             nullable,
           } = resolveSchemaFromTypeNames(parameter.type.names)
           if (!parameter.optional) {
+            if (!accumulator.required) {
+              accumulator.required = [];
+            }
             accumulator.required.push(name);
           }
           if (nullable) {
-            accumulator.properties[name].nullable = nullable;
+            prop.nullable = nullable;
           }
           if (defaultValue !== undefined) {
             // fix for array type if it is not properly closed in JSDoc
             if (typeof defaultValue === 'string' && defaultValue.startsWith('[') && !defaultValue.endsWith(']')) {
               defaultValue += ']';
             }
-            accumulator.properties[name].default = JSON.parse(defaultValue);
+            prop.default = JSON.parse(defaultValue);
           }
           if (constant) {
-            accumulator.properties[name].const = constant;
+            prop.const = constant;
           }
           if (format) {
-            accumulator.properties[name].format = format;
+            prop.format = format;
           }
           if (enumData) {
-            accumulator.properties[name].enum = enumData;
+            prop.enum = enumData;
           }
           if (type) {
-            accumulator.properties[name].type = type;
+            prop.type = type;
           }
           if (description) {
-            accumulator.properties[name].description = description;
+            prop.description = description;
           }
           if (items) {
-            accumulator.properties[name].items = items;
+            prop.items = items;
           }
+          if (isPlain) {
+            accumulator = Object.assign(accumulator, prop);
+          } else if (accumulator.properties) {
+            accumulator.properties[name] = prop;
+          } else {
+            accumulator.properties = {
+              [name]: prop,
+            };
+          }
+
           return accumulator;
         },
         prevObject,
       );
-      if (propertiesParameters) {
+      if (Object.keys(propertiesParameters).length) {
         const schemaPostJsdoc = schema.post.requestBody.content['application/json'].schema;
-        schemaPostJsdoc.properties.params = propertiesParameters;
+        if (propertiesParameters.properties) {
+          schemaPostJsdoc.properties.params = {
+            type: 'object',
+            ...propertiesParameters,
+          };
+        } else {
+          schemaPostJsdoc.properties.params = propertiesParameters;
+        }
       }
     }
     temporaryDocument.paths[`${api}${apiName}`] = schema;

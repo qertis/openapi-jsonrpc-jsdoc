@@ -68,7 +68,6 @@ test('t1', t => {
   t.is(typeof v1Test.post.description, 'string');
   t.true(Array.isArray(v1Test.post.tags));
   t.deepEqual(v1Test.post.tags, Array.from(new Set(v1Test.post.tags)));
-  t.true(Array.isArray(v1Test.post.parameters));
   const v1RequestBodySchema = v1Test.post.requestBody.content['application/json'].schema;
   t.is(v1RequestBodySchema.properties.params.properties.test.type, 'string');
   t.is(v1RequestBodySchema.properties.params.properties.array.type, 'array');
