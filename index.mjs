@@ -242,10 +242,10 @@ export default async function openapiJsonrpcJsdoc({
     const tags = new Set();
 
     if (module.tags && Array.isArray(module.tags)) {
-      for (const {title, value} of module.tags) {
+      for (const {title, originalTitle, value} of module.tags) {
         if (title === 'json-rpc') {
           isJsonRpc = true;
-        } else if (value && ['tags', 'tag'].includes(title)) {
+        } else if (value && ['tags', 'tag'].includes(originalTitle ?? title)) {
           value.split(',').map(t => t.trim()).forEach(t => tags.add(t));
         }
       }
