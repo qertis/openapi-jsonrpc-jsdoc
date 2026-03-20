@@ -224,6 +224,16 @@ export default async function openapiJsonrpcJsdoc({
             },
             error: {
               type: 'object',
+              required: ['code', 'message'],
+              properties: {
+                code: {
+                  type: 'integer',
+                  default: -32001,
+                },
+                message: {
+                  type: 'string',
+                },
+              },
             },
             jsonrpc: {
               type: 'string',
@@ -256,26 +266,49 @@ export default async function openapiJsonrpcJsdoc({
     const {filename} = module.meta;
     const apiName = filename.replace(/\.js$/, '');
 
+    let resultValues;
+    switch (module.returns?.[0]?.description) {
+      case 'Promise<*>':
+      case 'Promise<object>': {
+        resultValues = 'object';
+        break;
+      }
+      default: {
+        resultValues = '';
+        break;
+      }
+    }
+
+    let description = module.description;
+    if (module.todo?.length) {
+      description += '\n\nTODO: ' + module.todo.join();
+    }
+
     const schema = {
       post: {
         operationId: apiName,
         deprecated: module.deprecated || false,
         summary: module.summary ?? `/${apiName}`,
-        description: module.description,
+        description: description,
         tags: Array.from(tags),
         responses: {
           '200': {
-            description: 'OK',
+            description: 'OK response',
             content: {
               'application/json': {
                 schema: {
                   type: 'object',
+                  properties: {
+                    result: {
+                      type: resultValues,
+                    },
+                  },
                 },
               },
             },
           },
-          default: {
-            description: 'unexpected error',
+          '400': {
+            description: 'Unexpected error',
             content: {
               'application/json': {
                 schema: {
@@ -295,16 +328,18 @@ export default async function openapiJsonrpcJsdoc({
                 properties: {
                   method: {
                     type: 'string',
-                    description: `API method ${apiName}`,
+                    'default': apiName,
+                    description: `API method header`,
                   },
                   id: {
                     type: ['string', 'integer'],
-                    description: 'Request ID',
+                    default: 'swagger_unique_indentifier',
+                    description: 'Request ID header',
                   },
                   jsonrpc: {
                     type: 'string',
                     default: '2.0',
-                    description: 'JSON-RPC 2.0 protocol',
+                    description: 'JSON-RPC 2.0 header',
                   },
                 },
               },
