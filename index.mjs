@@ -357,81 +357,77 @@ export default async function openapiJsonrpcJsdoc({
         }
       }
 
-      const propertiesParameters = module.params.reduce(
-        (accumulator, parameter) => {
-          if (parameter.name.startsWith('_')) {
-            return accumulator;
-          }
-          if (!parameter.type) {
-            throw new Error('JSDoc parameter error: ' + apiName);
-          }
-          // если главный параметр объявлен как объект - пропускаем его
-          if (parameter.type.names.every(name => name.toLowerCase() === 'object')) {
-            return accumulator;
-          }
-          const isPlain = !parameter.name.includes('.');
+      let propertiesParameters = {};
+      let required = [];
+      for (const parameter of module.params) {
+        if (parameter.name.startsWith('_')) {
+          continue;
+        }
+        if (!parameter.type) {
+          throw new Error('JSDoc parameter error: ' + apiName);
+        }
+        // если главный параметр объявлен как объект - пропускаем его
+        if (parameter.type.names.every(name => name.toLowerCase() === 'object')) {
+          continue;
+        }
+        const isPlain = !parameter.name.includes('.');
 
-          const name = extractName(parameter.name);
-          const prop = {};
-          const description = parameter.description;
-          let defaultValue = parameter.defaultvalue;
+        const name = extractName(parameter.name);
+        const prop = {};
+        const description = parameter.description;
+        let defaultValue = parameter.defaultvalue;
 
-          const {
-            items,
-            constant,
-            enumData,
-            type,
-            format,
-            nullable,
-          } = resolveSchemaFromTypeNames(parameter.type.names)
-          if (!parameter.optional) {
-            if (!accumulator.required) {
-              accumulator.required = [];
-            }
-            accumulator.required.push(name);
+        const {
+          items,
+          constant,
+          enumData,
+          type,
+          format,
+          nullable,
+        } = resolveSchemaFromTypeNames(parameter.type.names)
+        if (!parameter.optional) {
+          required.push(name);
+        }
+        if (nullable) {
+          prop.nullable = nullable;
+        }
+        if (defaultValue !== undefined) {
+          // fix for array type if it is not properly closed in JSDoc
+          if (typeof defaultValue === 'string' && defaultValue.startsWith('[') && !defaultValue.endsWith(']')) {
+            defaultValue += ']';
           }
-          if (nullable) {
-            prop.nullable = nullable;
-          }
-          if (defaultValue !== undefined) {
-            // fix for array type if it is not properly closed in JSDoc
-            if (typeof defaultValue === 'string' && defaultValue.startsWith('[') && !defaultValue.endsWith(']')) {
-              defaultValue += ']';
-            }
-            prop.default = JSON.parse(defaultValue);
-          }
-          if (constant) {
-            prop.const = constant;
-          }
-          if (format) {
-            prop.format = format;
-          }
-          if (enumData) {
-            prop.enum = enumData;
-          }
-          if (type) {
-            prop.type = type;
-          }
-          if (description) {
-            prop.description = description;
-          }
-          if (items) {
-            prop.items = items;
-          }
-          if (isPlain) {
-            accumulator = Object.assign(accumulator, prop);
-          } else if (accumulator.properties) {
-            accumulator.properties[name] = prop;
-          } else {
-            accumulator.properties = {
-              [name]: prop,
-            };
-          }
+          prop.default = JSON.parse(defaultValue);
+        }
+        if (constant) {
+          prop.const = constant;
+        }
+        if (format) {
+          prop.format = format;
+        }
+        if (enumData) {
+          prop.enum = enumData;
+        }
+        if (type) {
+          prop.type = type;
+        }
+        if (description) {
+          prop.description = description;
+        }
+        if (items) {
+          prop.items = items;
+        }
+        if (isPlain) {
+          propertiesParameters = Object.assign(propertiesParameters, prop);
+        } else if (propertiesParameters.properties) {
+          propertiesParameters.properties[name] = prop;
+        } else {
+          propertiesParameters.properties = {
+            [name]: prop,
+          };
+        }
+      }
+      propertiesParameters.required = required;
 
-          return accumulator;
-        },
-        prevObject,
-      );
       if (Object.keys(propertiesParameters).length) {
         const schemaPostJsdoc = schema.post.requestBody.content['application/json'].schema;
         if (propertiesParameters.properties) {
