@@ -29,6 +29,15 @@ function isBigInt64(n) {
   }
 }
 
+function normalizeString(s) {
+  if (
+      (s.startsWith("'") && s.endsWith("'"))
+      || (s.startsWith('"') && s.endsWith('"'))
+  ) {
+    return s.slice(1, -1);
+  }
+}
+
 function resolveSchemaFromTypeNames(names) {
   let type;
   let format;
@@ -92,8 +101,10 @@ function resolveSchemaFromTypeNames(names) {
           return Number(n);
         } else if (isBigInt64(n)) {
           return n;
+        } else if (typeof n === 'string') {
+          return normalizeString(n)
         }
-        return String(n);
+        return s;
       });
 
       if (enumData.every(n => Number.isSafeInteger(n))) {
@@ -349,16 +360,16 @@ export default async function openapiJsonrpcJsdoc({
       },
     };
     if (module.params) {
-      const prevObject = {};
+      let propertiesParameters = {};
+      let required = [];
+
       if (module.examples?.length) {
         const exampleJSON = JSON.parse(module.examples[0]);
         if (exampleJSON) {
-          prevObject['default'] = exampleJSON;
+          propertiesParameters['default'] = exampleJSON;
         }
       }
 
-      let propertiesParameters = {};
-      let required = [];
       for (const parameter of module.params) {
         if (parameter.name.startsWith('_')) {
           continue;
