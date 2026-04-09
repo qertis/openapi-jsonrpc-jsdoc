@@ -7,7 +7,7 @@ OpenAPI JSON-RPC JSDoc is a Node.js library that generates OpenAPI 3.1 specifica
 ## Working Effectively
 
 ### Quick Start & Dependencies
-- **Node.js requirement**: Node.js >= 16 (confirmed working with v20.19.4)
+- **Node.js requirement**: Node.js >= 22
 - **Install dependencies**: `npm install` 
   - Takes approximately 30 seconds to complete
   - Will show 9 security vulnerabilities (known issue, doesn't affect functionality)
@@ -97,14 +97,9 @@ After making any changes to the library code (`index.js`), **ALWAYS** run these 
 
 ### CI/CD Pipeline (.github/workflows/nodejs.yml)
 - Runs on every push
-- Uses Node.js 14.x (outdated but functional)
+- Uses Node.js 22.x (outdated but functional)
 - Steps: `npm i` → `npm test`
 - **Known issue**: CI may fail due to test timeout, but core functionality remains valid
-
-### Dependencies
-- **Production**: `jsdoc-x ~4.1.0` (JSDoc parsing)
-- **Development**: `ava ~3.x` (testing), `express ~5.x`
-- **Security warnings**: 9 known vulnerabilities in dev dependencies - does not affect production usage
 
 ## Common Development Tasks
 
@@ -140,16 +135,6 @@ module.exports = (params) => params.id;
 - **Workaround**: Run unit tests only with `npm test -- --match='t*' --timeout=5s`
 - **Impact**: Core functionality is unaffected, unit tests validate library correctness
 
-### Security Vulnerabilities
-- **Issue**: 9 vulnerabilities in development dependencies (ava, jsdoc toolchain)
-- **Status**: Known issue, doesn't affect production library usage
-- **Action**: Do not run `npm audit fix --force` as it introduces breaking changes
-
-### Node.js Version Compatibility
-- **Requirement**: Node.js >= 16 (package.json engines field)
-- **CI uses**: Node.js 14.x (should be updated to 16+ but currently functional)
-- **Testing confirmed**: Works with Node.js 20.19.4
-
 ## Quick Reference Commands
 
 ```bash
@@ -164,7 +149,7 @@ node test-validation.js                       # <1 second
 
 # Check package info
 npm list --depth=0                           # Show direct dependencies
-node --version                               # Verify Node.js version >= 16
+node --version                               # Verify Node.js version >= 22
 ```
 
 ## Timing Expectations

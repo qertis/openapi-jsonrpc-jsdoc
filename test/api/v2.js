@@ -2,7 +2,7 @@
  * @json-rpc
  * @deprecated
  * @description Название API 2
- * @return {null}
+ * @returns {null}
  */
 module.exports = () => {
   return null;

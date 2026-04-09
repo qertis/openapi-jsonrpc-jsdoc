@@ -37,19 +37,19 @@ module.exports = (parameters) => {
 ```js
 const openapiJSONRpcJSDoc = require('openapi-jsonrpc-jsdoc');
 openapiJSONRpcJSDoc({
-    api: '/',
-    servers: [
-        {
-            url: '0.0.0.0:8080',
-         },
-    ],
-    info: {
-      title: 'Test API',
-    },
-    packageUrl: './package.json',
-    files: './api/*.js',
+  api: '/',
+  servers: [
+    {
+      url: '0.0.0.0:8080',
+     },
+  ],
+  info: {
+    title: 'Test API',
+  },
+  packageUrl: './package.json',
+  files: './api/*.js',
 }).then(data => {
-  JSON.stringify(data, null, 2);// openapi.json
+  JSON.stringify(data, null, 2); // openapi.json
 });
 ```
 

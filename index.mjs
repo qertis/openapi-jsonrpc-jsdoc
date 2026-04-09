@@ -104,7 +104,7 @@ function resolveSchemaFromTypeNames(names) {
         } else if (typeof n === 'string') {
           return normalizeString(n)
         }
-        return s;
+        return n;
       });
 
       if (enumData.every(n => Number.isSafeInteger(n))) {

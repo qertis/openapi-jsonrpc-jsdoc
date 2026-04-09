@@ -13,6 +13,7 @@
  *    "@context": "https://www.w3.org/ns/activitystreams",
  *    "type": "Note"
  * }
+ * @returns {string}
  */
 module.exports = (parameters, _xxx) => {
   return parameters.id;
