@@ -36,6 +36,7 @@ function normalizeString(s) {
   ) {
     return s.slice(1, -1);
   }
+  return s;
 }
 
 function resolveSchemaFromTypeNames(names) {
@@ -102,7 +103,7 @@ function resolveSchemaFromTypeNames(names) {
         } else if (isBigInt64(n)) {
           return n;
         } else if (typeof n === 'string') {
-          return normalizeString(n)
+          return normalizeString(n);
         }
         return n;
       });
@@ -139,7 +140,7 @@ function resolveSchemaFromTypeNames(names) {
       } else if (enumData.every(n => typeof n === 'string')) {
         type = 'string';
       } else if (enumData.length === 1) {
-        type = enumData[0];
+        [type] = enumData;
         constant = true;
       } else {
         type = undefined;
