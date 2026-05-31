@@ -46,7 +46,7 @@ test.before(async t => {
       title: 'Test API',
     },
     packageUrl: path.resolve('./package.json'),
-    files: './test/api/*.js',
+    files: ['./test/api/*.js', './test/api/*.ts'],
     'x-send-defaults': true,
     'x-api-id': 'json-rpc-example',
     'x-headers': [],
@@ -80,6 +80,23 @@ test('t2', t => {
   const data = t.context.data;
   const v2Test = data.paths['/api/v2'];
   t.true(v2Test.post.deprecated);
+});
+
+test('t3', t => {
+  const data = t.context.data;
+  const v3Test = data.paths['/api/v3'];
+  t.truthy(v3Test, 'путь /api/v3 должен существовать');
+  t.false(v3Test.post.deprecated);
+  t.is(v3Test.post.description, 'TypeScript API v3');
+  const schema = v3Test.post.requestBody.content['application/json'].schema;
+  t.is(schema.type, 'object');
+  t.true(schema.required.includes('method'));
+  const params = schema.properties.params;
+  t.is(params.type, 'object');
+  t.is(params.properties.id.type, 'string');
+  t.is(params.properties.limit.type, 'number');
+  t.true(params.required.includes('id'));
+  t.false(params.required.includes('limit'));
 });
 
 test('openapi validator', async (t) => {

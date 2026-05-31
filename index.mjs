@@ -1,4 +1,51 @@
+import { stripTypeScriptTypes } from 'node:module';
+import { readFileSync } from 'node:fs';
+import { glob } from 'node:fs/promises';
+import path from 'node:path';
 import jsdoc from 'jsdoc-api';
+
+async function collectJsdocDocuments(options) {
+  const allFiles = [];
+  for (const pattern of options.files || []) {
+    for await (const file of glob(pattern)) {
+      allFiles.push(file);
+    }
+  }
+
+  const { files: _f, package: _p, cache: _c, ...baseOptions } = options;
+
+  const allResults = [];
+
+  if (!options.cache && options.package) {
+    try {
+      const pkg = JSON.parse(readFileSync(options.package, options.encoding || 'utf8'));
+      allResults.push({
+        kind: 'package',
+        name: pkg.name,
+        version: pkg.version,
+        description: pkg.description,
+      });
+    } catch {}
+  }
+
+  for (const file of allFiles) {
+    const raw = readFileSync(file, options.encoding || 'utf8');
+    const source = /\.tsx?$/.test(file) ? stripTypeScriptTypes(raw) : raw;
+    const results = await jsdoc.explain({ ...baseOptions, source });
+
+    const basenameNoExt = path.basename(file, path.extname(file));
+    const dirname = path.dirname(file);
+    for (const item of results) {
+      if (item.meta) {
+        item.meta.filename = basenameNoExt;
+        item.meta.path = dirname;
+      }
+    }
+    allResults.push(...results);
+  }
+
+  return allResults;
+}
 
 function extractName(name) {
   try {
@@ -200,9 +247,9 @@ export default async function openapiJsonrpcJsdoc({
   }
   let documents;
   if (options.cache) {
-    documents = await jsdoc.explain(options);
+    documents = await collectJsdocDocuments(options);
   } else {
-    const allData = await jsdoc.explain(options);
+    const allData = await collectJsdocDocuments(options);
     documents = allData.filter(item => item.kind !== 'package');
     const package_ = allData.find(item => item.kind === 'package');
     info.version = package_.version;
@@ -276,7 +323,7 @@ export default async function openapiJsonrpcJsdoc({
       continue prepare;
     }
     const {filename} = module.meta;
-    const apiName = filename.replace(/\.js$/, '');
+    const apiName = path.parse(filename).name || filename.replace(/\.[^.]+$/, '');
 
     let resultValues;
     switch (module.returns?.[0]?.description) {
