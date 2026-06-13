@@ -71,6 +71,22 @@ test('t1', t => {
   const v1RequestBodySchema = v1Test.post.requestBody.content['application/json'].schema;
   t.is(v1RequestBodySchema.properties.params.properties.test.type, 'string');
   t.is(v1RequestBodySchema.properties.params.properties.array.type, 'array');
+  t.deepEqual(v1RequestBodySchema.properties.params.properties.nullableString, {
+    nullable: true,
+    type: 'string',
+    description: 'nullable string',
+  });
+  t.deepEqual(v1RequestBodySchema.properties.params.properties.nullableNumber, {
+    nullable: true,
+    type: 'number',
+    description: 'nullable number',
+  });
+  t.deepEqual(v1RequestBodySchema.properties.params.properties.nullableDate, {
+    nullable: true,
+    format: 'date-time',
+    type: 'string',
+    description: 'nullable date',
+  });
   t.is(v1RequestBodySchema.type, 'object');
   t.true(v1RequestBodySchema.required.includes('method'));
   t.true(data['x-explorer-enabled']);

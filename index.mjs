@@ -194,7 +194,7 @@ function resolveSchemaFromTypeNames(names) {
       }
 
       if (enumData?.length === 1) {
-        if (!format) {
+        if (!format && !nullable) {
           [format] = enumData;
         }
         enumData = undefined;
